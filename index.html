@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Budget mensuel</title>
+		<link rel="stylesheet" href="styles.css" />
+		<script
+			type="text/javascript"
+			src="https://www.gstatic.com/charts/loader.js"
+		></script>
+	</head>
+	<body>
+		<header>
+			<h1>Suivi de budget mensuel</h1>
+		</header>
+
+		<main>
+			<section class="month-section">
+				<h2>Mois</h2>
+				<div class="month-controls">
+					<label>
+						Mois :
+						<input type="month" id="monthSelector" />
+					</label>
+					<button type="button" id="duplicateMonthBtn">
+						Dupliquer le mois précédent
+					</button>
+				</div>
+			</section>
+
+			<section class="inputs-section">
+				<h2>Données du mois</h2>
+				<div class="inputs-grid">
+					<label>
+						Salaire net mensuel (€)
+						<input type="number" id="salaryInput" min="0" step="100" />
+					</label>
+					<label>
+						Loyer facture totale (pour 2 personnes)
+						<input type="number" id="rentInput" min="0" step="50" />
+					</label>
+				</div>
+			</section>
+
+			<section class="summary-section">
+				<h2>Résumé du mois</h2>
+				<div class="summary-grid">
+					<div class="summary-item">
+						<span class="summary-label">Salaire :</span>
+						<span id="summarySalary" class="summary-value">0 €</span>
+					</div>
+					<div class="summary-item">
+						<span class="summary-label">Loyer total (détails) :</span>
+						<span id="summaryRent" class="summary-value">0 €</span>
+					</div>
+					<div class="summary-item">
+						<span class="summary-label">Charges :</span>
+						<span id="summaryCharges" class="summary-value">0 €</span>
+					</div>
+					<div class="summary-item">
+						<span class="summary-label">Total charges (loyer + charges) :</span>
+						<span id="summaryTotalCharges" class="summary-value">0 €</span>
+					</div>
+					<div class="summary-item summary-total">
+						<span class="summary-label">Pouvoir d'achat :</span>
+						<span id="summaryPouvoir" class="summary-value">0 €</span>
+					</div>
+				</div>
+				<div id="summaryDebug" class="summary-debug"></div>
+			</section>
+
+			<section class="chart-section">
+				<h2>Graphique du mois</h2>
+				<div id="sankeyWrapper">
+					<div id="sankeyChart"></div>
+				</div>
+				<p id="sankeyEmpty" class="sankey-empty">
+					Saisissez un salaire et quelques lignes de dépenses pour voir le
+					graphique.
+				</p>
+			</section>
+
+			<section class="tables-section">
+				<h2>Détails des dépenses</h2>
+
+				<div class="tables-grid">
+					<div class="table-block">
+						<h3>Charges</h3>
+						<table>
+							<thead>
+								<tr>
+									<th>Libellé</th>
+									<th>Montant (€)</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody id="chargesBody"></tbody>
+						</table>
+						<button type="button" id="addChargeBtn">
+							Ajouter une charge
+						</button>
+					</div>
+
+					<div class="table-block">
+						<h3>Détails du loyer</h3>
+						<table>
+							<thead>
+								<tr>
+									<th>Libellé</th>
+									<th>Montant (€)</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody id="rentDetailsBody"></tbody>
+						</table>
+						<button type="button" id="addRentDetailBtn">
+							Ajouter une ligne de loyer
+						</button>
+						<div id="rentSummary" class="rent-summary">
+							<div>
+								Part attendue (facture / 2) :
+								<span id="expectedShareValue">0 €</span>
+							</div>
+							<div>
+								Loyer + Provision pour charges :
+								<span id="loyerProvisionValue">0 €</span>
+							</div>
+							<div
+								id="rentMismatchWarning"
+								class="rent-warning hidden"
+							>
+								Attention : la part calculée ne correspond pas à la
+								facture.
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script src="script.js"></script>
+	</body>
+</html>
