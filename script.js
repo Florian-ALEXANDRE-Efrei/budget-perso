@@ -1,10 +1,10 @@
 const STORAGE_KEY = "budgetAppStateV2";
-const EXPORT_BUNDLE_KEY = "budgetExportBundle";
 
 let appState = {};
 let currentMonthKey = null;
 let appInitialized = false;
 let googleChartsLoaded = false;
+let defaultTablesConfig = null;
 
 // Load Google Charts Sankey
 if (window.google && window.google.charts) {
@@ -45,15 +45,46 @@ function getCurrentMonthState() {
 }
 
 function createEmptyMonthState() {
+	const cfg = defaultTablesConfig || { charges: [], rentDetails: [] };
 	return {
 		salary: 0,
 		rentBillTotal: 0,
-		charges: [],
-		rentDetails: [
-			{ label: "Loyer", amount: 0 },
-			{ label: "Provision pour charges", amount: 0 },
-		],
+		charges: (cfg.charges || []).map((item) => ({
+			label: item.label,
+			amount: item.defaultAmount ?? 0,
+		})),
+		rentDetails: ensureMandatoryRentRows(
+			(cfg.rentDetails || []).map((item) => ({
+				label: item.label,
+				amount: item.defaultAmount ?? 0,
+			}))
+		),
 	};
+}
+
+function resetCurrentMonthTablesToDefaults() {
+	if (!currentMonthKey) {
+		window.alert("Aucun mois en cours à réinitialiser.");
+		return;
+	}
+	const state = getCurrentMonthState();
+	if (!state) {
+		window.alert("État du mois introuvable.");
+		return;
+	}
+	const cfg = defaultTablesConfig || { charges: [], rentDetails: [] };
+	state.charges = (cfg.charges || []).map((item) => ({
+		label: item.label,
+		amount: item.defaultAmount ?? 0,
+	}));
+	state.rentDetails = ensureMandatoryRentRows(
+		(cfg.rentDetails || []).map((item) => ({
+			label: item.label,
+			amount: item.defaultAmount ?? 0,
+		}))
+	);
+	saveAppState();
+	renderAll();
 }
 
 function loadAppState() {
@@ -135,17 +166,20 @@ function saveAppState() {
 	}
 }
 
-function downloadJson(obj, filename) {
-	const json = JSON.stringify(obj, null, 2);
-	const blob = new Blob([json], { type: "application/json" });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = filename;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+async function loadDefaultTablesConfig() {
+	if (defaultTablesConfig) return defaultTablesConfig;
+	try {
+		const res = await fetch("default-tables.json", { cache: "no-cache" });
+		if (!res.ok) {
+			throw new Error(`HTTP ${res.status}`);
+		}
+		const data = await res.json();
+		defaultTablesConfig = data || { charges: [], rentDetails: [] };
+	} catch (e) {
+		console.error("Erreur de chargement de default-tables.json :", e);
+		defaultTablesConfig = { charges: [], rentDetails: [] };
+	}
+	return defaultTablesConfig;
 }
 
 function initMonthSelector() {
@@ -188,59 +222,10 @@ function duplicatePreviousMonth() {
 	renderAll();
 }
 
-function handleExportCurrentMonth() {
-	const state = getCurrentMonthState();
-	if (!currentMonthKey || !state) {
-		window.alert("Aucun mois en cours à exporter.");
-		return;
-	}
-
-	let bundle = null;
-	try {
-		const existing = window.localStorage.getItem(EXPORT_BUNDLE_KEY);
-		if (existing) {
-			bundle = JSON.parse(existing);
-		}
-	} catch (e) {
-		console.error("Erreur de lecture du bundle d'export :", e);
-	}
-
-	if (!bundle || typeof bundle !== "object") {
-		bundle = { version: 1, months: {} };
-	}
-	if (!bundle.months || typeof bundle.months !== "object") {
-		bundle.months = {};
-	}
-	bundle.version = 1;
-	bundle.months[currentMonthKey] = state;
-
-	try {
-		window.localStorage.setItem(EXPORT_BUNDLE_KEY, JSON.stringify(bundle));
-	} catch (e) {
-		console.error("Erreur de sauvegarde du bundle d'export :", e);
-	}
-
-	downloadJson(bundle, "budget-data.json");
-}
-
 function setupEventListeners() {
 	document
 		.getElementById("duplicateMonthBtn")
 		.addEventListener("click", duplicatePreviousMonth);
-
-	const exportBtn = document.getElementById("exportMonthBtn");
-	if (exportBtn) {
-		exportBtn.addEventListener("click", handleExportCurrentMonth);
-	}
-
-	const importBtn = document.getElementById("importMonthBtn");
-	const importInput = document.getElementById("importFileInput");
-	if (importBtn && importInput) {
-		importBtn.addEventListener("click", () => {
-			importInput.click();
-		});
-		importInput.addEventListener("change", handleImportFileChange);
-	}
 
 	const salaryInput = document.getElementById("salaryInput");
 	const rentInput = document.getElementById("rentInput");
@@ -259,21 +244,16 @@ function setupEventListeners() {
 		renderSummaryAndSankey();
 	});
 
-	document.getElementById("addChargeBtn").addEventListener("click", () => {
-		const state = getCurrentMonthState();
-		state.charges.push({ label: "", amount: 0 });
-		saveAppState();
-		renderAll();
-	});
-
-	document
-		.getElementById("addRentDetailBtn")
-		.addEventListener("click", () => {
-			const state = getCurrentMonthState();
-			state.rentDetails.push({ label: "", amount: 0 });
-			saveAppState();
-			renderAll();
+	const resetBtn = document.getElementById("resetTablesBtn");
+	if (resetBtn) {
+		resetBtn.addEventListener("click", () => {
+			const ok = window.confirm(
+				"Réinitialiser les montants de ce mois avec les valeurs par défaut ? Cela remplacera les montants actuels des tableaux Charges et Détails du loyer."
+			);
+			if (!ok) return;
+			resetCurrentMonthTablesToDefaults();
 		});
+	}
 
 	setupChargesTableListeners();
 	setupRentDetailsTableListeners();
@@ -306,16 +286,6 @@ function setupChargesTableListeners() {
 		renderSummaryAndSankey();
 	});
 
-	tbody.addEventListener("click", (event) => {
-		if (!event.target.classList.contains("row-delete")) return;
-		const row = event.target.closest("tr");
-		if (!row) return;
-		const index = Number(row.dataset.index);
-		const state = getCurrentMonthState();
-		state.charges.splice(index, 1);
-		saveAppState();
-		renderAll();
-	});
 }
 
 function setupRentDetailsTableListeners() {
@@ -340,17 +310,6 @@ function setupRentDetailsTableListeners() {
 		renderSummaryAndSankey();
 	});
 
-	tbody.addEventListener("click", (event) => {
-		if (!event.target.classList.contains("row-delete")) return;
-		const row = event.target.closest("tr");
-		if (!row) return;
-		if (row.dataset.mandatory === "true") return;
-		const index = Number(row.dataset.index);
-		const state = getCurrentMonthState();
-		state.rentDetails.splice(index, 1);
-		saveAppState();
-		renderAll();
-	});
 }
 
 function renderAll() {
@@ -376,11 +335,7 @@ function renderChargesTable(tbodyId, items) {
 		tr.dataset.index = String(index);
 
 		const labelTd = document.createElement("td");
-		const labelInput = document.createElement("input");
-		labelInput.type = "text";
-		labelInput.value = item.label || "";
-		labelInput.className = "row-label";
-		labelTd.appendChild(labelInput);
+		labelTd.textContent = item.label || "";
 
 		const amountTd = document.createElement("td");
 		const amountInput = document.createElement("input");
@@ -392,12 +347,6 @@ function renderChargesTable(tbodyId, items) {
 		amountTd.appendChild(amountInput);
 
 		const actionsTd = document.createElement("td");
-		const delBtn = document.createElement("button");
-		delBtn.type = "button";
-		delBtn.textContent = "Supprimer";
-		delBtn.className = "row-delete";
-		actionsTd.appendChild(delBtn);
-
 		tr.appendChild(labelTd);
 		tr.appendChild(amountTd);
 		tr.appendChild(actionsTd);
@@ -421,15 +370,7 @@ function renderRentDetailsTable(tbodyId, items) {
 		if (isMandatory) tr.dataset.mandatory = "true";
 
 		const labelTd = document.createElement("td");
-		if (isMandatory) {
-			labelTd.textContent = item.label;
-		} else {
-			const labelInput = document.createElement("input");
-			labelInput.type = "text";
-			labelInput.value = item.label || "";
-			labelInput.className = "row-label";
-			labelTd.appendChild(labelInput);
-		}
+		labelTd.textContent = item.label;
 
 		const amountTd = document.createElement("td");
 		const amountInput = document.createElement("input");
@@ -441,14 +382,6 @@ function renderRentDetailsTable(tbodyId, items) {
 		amountTd.appendChild(amountInput);
 
 		const actionsTd = document.createElement("td");
-		if (!isMandatory) {
-			const delBtn = document.createElement("button");
-			delBtn.type = "button";
-			delBtn.textContent = "Supprimer";
-			delBtn.className = "row-delete";
-			actionsTd.appendChild(delBtn);
-		}
-
 		tr.appendChild(labelTd);
 		tr.appendChild(amountTd);
 		tr.appendChild(actionsTd);
@@ -641,104 +574,18 @@ function updateRentComparison(state) {
 	}
 }
 
-function handleImportFileChange(event) {
-	const input = event.target;
-	const file = input.files && input.files[0];
-	if (!file) {
-		input.value = "";
-		return;
-	}
-
-	const reader = new FileReader();
-	reader.onload = (e) => {
-		try {
-			const text = e.target.result;
-			const data = JSON.parse(text);
-			let bundle = { version: 1, months: {} };
-
-			if (data && typeof data === "object") {
-				if (data.months && typeof data.months === "object") {
-					bundle.version = Number(data.version) || 1;
-					bundle.months = data.months;
-				} else {
-					for (const [key, value] of Object.entries(data)) {
-						if (/^\d{4}-\d{2}$/.test(key) && value && typeof value === "object") {
-							bundle.months[key] = value;
-						}
-					}
-				}
-			}
-
-			if (!bundle.months || Object.keys(bundle.months).length === 0) {
-				window.alert("Fichier JSON d'export invalide ou vide.");
-				return;
-			}
-
-			const monthKey = currentMonthKey;
-			if (!monthKey) {
-				window.alert("Aucun mois en cours pour l'import.");
-				return;
-			}
-
-			let importedState = null;
-			let message = "";
-			if (bundle.months && bundle.months[monthKey]) {
-				importedState = bundle.months[monthKey];
-				message = "Données du mois chargées.";
-			} else {
-				const [yearStr, monthStr] = monthKey.split("-");
-				let year = Number(yearStr);
-				let month = Number(monthStr); // 1-12
-				let prevYear = year;
-				let prevMonth = month - 1;
-				if (prevMonth === 0) {
-					prevMonth = 12;
-					prevYear -= 1;
-				}
-				const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
-				if (bundle.months && bundle.months[prevKey]) {
-					importedState = bundle.months[prevKey];
-					message =
-						"Données introuvables pour ce mois, chargement du mois précédent.";
-				} else {
-					window.alert(
-						"Données introuvables pour ce mois et le mois précédent dans ce fichier."
-					);
-				}
-			}
-
-			if (importedState) {
-				appState[monthKey] = importedState;
-				saveAppState();
-				renderAll();
-				window.alert(message);
-				try {
-					window.localStorage.setItem(
-						EXPORT_BUNDLE_KEY,
-						JSON.stringify(bundle)
-					);
-				} catch (err) {
-					console.error("Erreur de sauvegarde du bundle importé :", err);
-				}
-			}
-		} catch (err) {
-			console.error("Erreur de lecture du fichier d'import :", err);
-			window.alert("Fichier JSON invalide.");
-		} finally {
-			input.value = "";
-		}
-	};
-
-	reader.readAsText(file, "utf-8");
-}
-
 document.addEventListener("DOMContentLoaded", () => {
+	initApp();
+
+	// If charts loaded after DOMContentLoaded, they will draw via callback.
+});
+
+async function initApp() {
+	await loadDefaultTablesConfig();
 	loadAppState();
 	initMonthSelector();
 	setupEventListeners();
 	appInitialized = true;
 	renderAll();
-
-	// If charts loaded after DOMContentLoaded, they will draw via callback.
-});
+}
 

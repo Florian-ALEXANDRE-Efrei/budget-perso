@@ -44,14 +44,6 @@ section h2 {
 	align-items: center;
 }
 
-.export-import-row {
-	margin-top: 0.75rem;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	align-items: center;
-}
-
 label {
 	display: flex;
 	flex-direction: column;
@@ -163,6 +155,12 @@ button:active {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 	gap: 1rem;
+}
+
+.reset-row {
+	margin-top: 0.75rem;
+	display: flex;
+	justify-content: flex-end;
 }
 
 .table-block h3 {

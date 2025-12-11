@@ -27,20 +27,6 @@
 						Dupliquer le mois précédent
 					</button>
 				</div>
-				<div class="export-import-row">
-					<button id="exportMonthBtn" type="button">
-						Exporter les données du mois
-					</button>
-					<button id="importMonthBtn" type="button">
-						Importer les données du mois
-					</button>
-					<input
-						id="importFileInput"
-						type="file"
-						accept="application/json"
-						class="hidden"
-					/>
-				</div>
 			</section>
 
 			<section class="inputs-section">
@@ -110,9 +96,6 @@
 							</thead>
 							<tbody id="chargesBody"></tbody>
 						</table>
-						<button type="button" id="addChargeBtn">
-							Ajouter une charge
-						</button>
 					</div>
 
 					<div class="table-block">
@@ -127,9 +110,6 @@
 							</thead>
 							<tbody id="rentDetailsBody"></tbody>
 						</table>
-						<button type="button" id="addRentDetailBtn">
-							Ajouter une ligne de loyer
-						</button>
 						<div id="rentSummary" class="rent-summary">
 							<div>
 								Part attendue (facture / 2) :
@@ -148,6 +128,11 @@
 							</div>
 						</div>
 					</div>
+				</div>
+				<div class="reset-row">
+					<button id="resetTablesBtn" type="button">
+						Réinitialiser les montants depuis les valeurs par défaut
+					</button>
 				</div>
 			</section>
 		</main>

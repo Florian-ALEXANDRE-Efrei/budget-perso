@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "charges": [
+    { "label": "Chat GPT", "defaultAmount": 23 },
+    { "label": "Red By Sfr", "defaultAmount": 8 },
+    { "label": "Assurance vie", "defaultAmount": 150 },
+    { "label": "Velib", "defaultAmount": 7 },
+    { "label": "Navigo", "defaultAmount": 41.6 }
+  ],
+  "rentDetails": [
+    { "label": "Loyer", "defaultAmount": 710 },
+    { "label": "Provision pour charges", "defaultAmount": 40 },
+    { "label": "Assurance habitation", "defaultAmount": 19.82 },
+    { "label": "Internet", "defaultAmount": 12.995 },
+    { "label": "Electricité", "defaultAmount": 50 }
+  ]
+}
