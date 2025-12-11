@@ -152,25 +152,26 @@ function initMonthSelector() {
 }
 
 function duplicatePreviousMonth() {
-	if (!currentMonthKey) return;
-	const [yearStr, monthStr] = currentMonthKey.split("-");
-	const year = Number(yearStr);
-	const month = Number(monthStr); // 1-12
-	let prevYear = year;
-	let prevMonth = month - 1;
-	if (prevMonth === 0) {
-		prevMonth = 12;
-		prevYear -= 1;
-	}
-	const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
-	const prevState = appState[prevKey];
-	if (!prevState) {
-		return;
-	}
-	const clone = JSON.parse(JSON.stringify(prevState));
-	appState[currentMonthKey] = clone;
-	saveAppState();
-	renderAll();
+    if (!currentMonthKey) return;
+    const [yearStr, monthStr] = currentMonthKey.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr); // 1-12
+    let prevYear = year;
+    let prevMonth = month - 1;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear -= 1;
+    }
+    const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
+    const prevState = appState[prevKey];
+    if (!prevState) {
+        return;
+    }
+    const clone = JSON.parse(JSON.stringify(prevState));
+    clone.salary = 0; // do not carry over last month salary
+    appState[currentMonthKey] = clone;
+    saveAppState();
+    renderAll();
 }
 
 function setupEventListeners() {
@@ -436,16 +437,6 @@ function renderSummaryAndSankey() {
 		totals.pouvoirAchat
 	);
 
-	// Debug line showing the explicit formula
-	const debugEl = document.getElementById("summaryDebug");
-	if (debugEl) {
-		const s = Number(totals.salary) || 0;
-		const r = Number(totals.totalRent) || 0;
-		const c = Number(totals.totalCharges) || 0;
-		const p = Number(totals.pouvoirAchat) || 0;
-		debugEl.textContent = `Salaire – (Loyer total + Charges) = Pouvoir d’achat : ${s} – (${r} + ${c}) = ${p} €`;
-	}
-
 	updateRentComparison(state);
 
 	if (googleChartsLoaded) {
@@ -537,51 +528,54 @@ function drawSankey(state) {
 }
 
 function updateRentComparison(state) {
-	const rentSummary = document.getElementById("rentSummary");
-	const expectedSpan = document.getElementById("expectedShareValue");
-	const loyerProvSpan = document.getElementById("loyerProvisionValue");
-	const warning = document.getElementById("rentMismatchWarning");
-	if (!rentSummary || !expectedSpan || !loyerProvSpan || !warning) return;
+    const rentSummary = document.getElementById("rentSummary");
+    const expectedSpan = document.getElementById("expectedShareValue");
+    const loyerProvSpan = document.getElementById("loyerProvisionValue");
+    const warning = document.getElementById("rentMismatchWarning");
+    if (!rentSummary || !expectedSpan || !loyerProvSpan || !warning) return;
 
-	const rawBill = Number(state.rentBillTotal);
-	const hasBill = Number.isFinite(rawBill) && rawBill > 0;
-	const rentBillTotal = hasBill ? rawBill : 0;
-	const expectedShare = rentBillTotal / 2;
+    // Always show a message (neutral / OK / warning)
+    warning.classList.remove("hidden");
 
-	let loyerLineAmount = 0;
-	let provisionLineAmount = 0;
-	(state.rentDetails || []).forEach((item) => {
-		if (item.label === "Loyer") {
-			loyerLineAmount = Number(item.amount) || 0;
-		}
-		if (item.label === "Provision pour charges") {
-			provisionLineAmount = Number(item.amount) || 0;
-		}
-	});
-	const loyerPlusProvision = loyerLineAmount + provisionLineAmount;
+    const rawBill = Number(state.rentBillTotal);
+    const hasBill = Number.isFinite(rawBill) && rawBill > 0;
+    const rentBillTotal = hasBill ? rawBill : 0;
+    const expectedShare = rentBillTotal / 2;
 
-	expectedSpan.textContent = formatCurrency(expectedShare);
-	loyerProvSpan.textContent = formatCurrency(loyerPlusProvision);
+    let loyerLineAmount = 0;
+    let provisionLineAmount = 0;
+    (state.rentDetails || []).forEach((item) => {
+        if (item.label === "Loyer") {
+            loyerLineAmount = Number(item.amount) || 0;
+        }
+        if (item.label === "Provision pour charges") {
+            provisionLineAmount = Number(item.amount) || 0;
+        }
+    });
+    const loyerPlusProvision = loyerLineAmount + provisionLineAmount;
 
-	rentSummary.classList.remove("rent-check--ok", "rent-check--warning");
-	const EPSILON = 0.01;
+    expectedSpan.textContent = formatCurrency(expectedShare);
+    loyerProvSpan.textContent = formatCurrency(loyerPlusProvision);
 
-	if (!hasBill) {
-		warning.textContent =
-			"Veuillez saisir le loyer facture totale pour vérifier les montants.";
-		return;
-	}
+    rentSummary.classList.remove("rent-check--ok", "rent-check--warning");
+    const EPSILON = 0.01;
 
-	const diff = Math.abs(expectedShare - loyerPlusProvision);
-	if (diff <= EPSILON) {
-		rentSummary.classList.add("rent-check--ok");
-		warning.textContent =
-			"OK : la part attendue correspond à Loyer + Provision pour charges.";
-	} else {
-		rentSummary.classList.add("rent-check--warning");
-		warning.textContent =
-			"Attention : la part attendue (facture / 2) ne correspond pas à Loyer + Provision pour charges.";
-	}
+    if (!hasBill) {
+        warning.textContent =
+            "Veuillez saisir le loyer facture totale pour vérifier les montants.";
+        return;
+    }
+
+    const diff = Math.abs(expectedShare - loyerPlusProvision);
+    if (diff <= EPSILON) {
+        rentSummary.classList.add("rent-check--ok");
+        warning.textContent =
+            "OK : la part attendue correspond à Loyer + Provision pour charges.";
+    } else {
+        rentSummary.classList.add("rent-check--warning");
+        warning.textContent =
+            "Attention : la part attendue (facture / 2) ne correspond pas à Loyer + Provision pour charges.";
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
