@@ -1,4 +1,5 @@
 const STORAGE_KEY = "budgetAppStateV2";
+const EXPORT_BUNDLE_KEY = "budgetExportBundle";
 
 let appState = {};
 let currentMonthKey = null;
@@ -134,6 +135,19 @@ function saveAppState() {
 	}
 }
 
+function downloadJson(obj, filename) {
+	const json = JSON.stringify(obj, null, 2);
+	const blob = new Blob([json], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
 function initMonthSelector() {
 	const monthInput = document.getElementById("monthSelector");
 	const today = new Date();
@@ -152,32 +166,81 @@ function initMonthSelector() {
 }
 
 function duplicatePreviousMonth() {
-    if (!currentMonthKey) return;
-    const [yearStr, monthStr] = currentMonthKey.split("-");
-    const year = Number(yearStr);
-    const month = Number(monthStr); // 1-12
-    let prevYear = year;
-    let prevMonth = month - 1;
-    if (prevMonth === 0) {
-        prevMonth = 12;
-        prevYear -= 1;
-    }
-    const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
-    const prevState = appState[prevKey];
-    if (!prevState) {
-        return;
-    }
-    const clone = JSON.parse(JSON.stringify(prevState));
-    clone.salary = 0; // do not carry over last month salary
-    appState[currentMonthKey] = clone;
-    saveAppState();
-    renderAll();
+ 	if (!currentMonthKey) return;
+	const [yearStr, monthStr] = currentMonthKey.split("-");
+	const year = Number(yearStr);
+	const month = Number(monthStr); // 1-12
+	let prevYear = year;
+	let prevMonth = month - 1;
+	if (prevMonth === 0) {
+		prevMonth = 12;
+		prevYear -= 1;
+	}
+	const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
+	const prevState = appState[prevKey];
+	if (!prevState) {
+		return;
+	}
+	const clone = JSON.parse(JSON.stringify(prevState));
+	clone.salary = 0; // do not carry over last month salary
+	appState[currentMonthKey] = clone;
+	saveAppState();
+	renderAll();
+}
+
+function handleExportCurrentMonth() {
+	const state = getCurrentMonthState();
+	if (!currentMonthKey || !state) {
+		window.alert("Aucun mois en cours à exporter.");
+		return;
+	}
+
+	let bundle = null;
+	try {
+		const existing = window.localStorage.getItem(EXPORT_BUNDLE_KEY);
+		if (existing) {
+			bundle = JSON.parse(existing);
+		}
+	} catch (e) {
+		console.error("Erreur de lecture du bundle d'export :", e);
+	}
+
+	if (!bundle || typeof bundle !== "object") {
+		bundle = { version: 1, months: {} };
+	}
+	if (!bundle.months || typeof bundle.months !== "object") {
+		bundle.months = {};
+	}
+	bundle.version = 1;
+	bundle.months[currentMonthKey] = state;
+
+	try {
+		window.localStorage.setItem(EXPORT_BUNDLE_KEY, JSON.stringify(bundle));
+	} catch (e) {
+		console.error("Erreur de sauvegarde du bundle d'export :", e);
+	}
+
+	downloadJson(bundle, "budget-data.json");
 }
 
 function setupEventListeners() {
 	document
 		.getElementById("duplicateMonthBtn")
 		.addEventListener("click", duplicatePreviousMonth);
+
+	const exportBtn = document.getElementById("exportMonthBtn");
+	if (exportBtn) {
+		exportBtn.addEventListener("click", handleExportCurrentMonth);
+	}
+
+	const importBtn = document.getElementById("importMonthBtn");
+	const importInput = document.getElementById("importFileInput");
+	if (importBtn && importInput) {
+		importBtn.addEventListener("click", () => {
+			importInput.click();
+		});
+		importInput.addEventListener("change", handleImportFileChange);
+	}
 
 	const salaryInput = document.getElementById("salaryInput");
 	const rentInput = document.getElementById("rentInput");
@@ -528,54 +591,145 @@ function drawSankey(state) {
 }
 
 function updateRentComparison(state) {
-    const rentSummary = document.getElementById("rentSummary");
-    const expectedSpan = document.getElementById("expectedShareValue");
-    const loyerProvSpan = document.getElementById("loyerProvisionValue");
-    const warning = document.getElementById("rentMismatchWarning");
-    if (!rentSummary || !expectedSpan || !loyerProvSpan || !warning) return;
+	const rentSummary = document.getElementById("rentSummary");
+	const expectedSpan = document.getElementById("expectedShareValue");
+	const loyerProvSpan = document.getElementById("loyerProvisionValue");
+	const warning = document.getElementById("rentMismatchWarning");
+	if (!rentSummary || !expectedSpan || !loyerProvSpan || !warning) return;
 
-    // Always show a message (neutral / OK / warning)
-    warning.classList.remove("hidden");
+	// Always show a message (neutral / OK / warning)
+	warning.classList.remove("hidden");
 
-    const rawBill = Number(state.rentBillTotal);
-    const hasBill = Number.isFinite(rawBill) && rawBill > 0;
-    const rentBillTotal = hasBill ? rawBill : 0;
-    const expectedShare = rentBillTotal / 2;
+	const rawBill = Number(state.rentBillTotal);
+	const hasBill = Number.isFinite(rawBill) && rawBill > 0;
+	const rentBillTotal = hasBill ? rawBill : 0;
+	const expectedShare = rentBillTotal / 2;
 
-    let loyerLineAmount = 0;
-    let provisionLineAmount = 0;
-    (state.rentDetails || []).forEach((item) => {
-        if (item.label === "Loyer") {
-            loyerLineAmount = Number(item.amount) || 0;
-        }
-        if (item.label === "Provision pour charges") {
-            provisionLineAmount = Number(item.amount) || 0;
-        }
-    });
-    const loyerPlusProvision = loyerLineAmount + provisionLineAmount;
+	let loyerLineAmount = 0;
+	let provisionLineAmount = 0;
+	(state.rentDetails || []).forEach((item) => {
+		if (item.label === "Loyer") {
+			loyerLineAmount = Number(item.amount) || 0;
+		}
+		if (item.label === "Provision pour charges") {
+			provisionLineAmount = Number(item.amount) || 0;
+		}
+	});
+	const loyerPlusProvision = loyerLineAmount + provisionLineAmount;
 
-    expectedSpan.textContent = formatCurrency(expectedShare);
-    loyerProvSpan.textContent = formatCurrency(loyerPlusProvision);
+	expectedSpan.textContent = formatCurrency(expectedShare);
+	loyerProvSpan.textContent = formatCurrency(loyerPlusProvision);
 
-    rentSummary.classList.remove("rent-check--ok", "rent-check--warning");
-    const EPSILON = 0.01;
+	rentSummary.classList.remove("rent-check--ok", "rent-check--warning");
+	const EPSILON = 0.01;
 
-    if (!hasBill) {
-        warning.textContent =
-            "Veuillez saisir le loyer facture totale pour vérifier les montants.";
-        return;
-    }
+	if (!hasBill) {
+		warning.textContent =
+			"Veuillez saisir le loyer facture totale pour vérifier les montants.";
+		return;
+	}
 
-    const diff = Math.abs(expectedShare - loyerPlusProvision);
-    if (diff <= EPSILON) {
-        rentSummary.classList.add("rent-check--ok");
-        warning.textContent =
-            "OK : la part attendue correspond à Loyer + Provision pour charges.";
-    } else {
-        rentSummary.classList.add("rent-check--warning");
-        warning.textContent =
-            "Attention : la part attendue (facture / 2) ne correspond pas à Loyer + Provision pour charges.";
-    }
+	const diff = Math.abs(expectedShare - loyerPlusProvision);
+	if (diff <= EPSILON) {
+		rentSummary.classList.add("rent-check--ok");
+		warning.textContent =
+			"OK : la part attendue correspond à Loyer + Provision pour charges.";
+	} else {
+		rentSummary.classList.add("rent-check--warning");
+		warning.textContent =
+			"Attention : la part attendue (facture / 2) ne correspond pas à Loyer + Provision pour charges.";
+	}
+}
+
+function handleImportFileChange(event) {
+	const input = event.target;
+	const file = input.files && input.files[0];
+	if (!file) {
+		input.value = "";
+		return;
+	}
+
+	const reader = new FileReader();
+	reader.onload = (e) => {
+		try {
+			const text = e.target.result;
+			const data = JSON.parse(text);
+			let bundle = { version: 1, months: {} };
+
+			if (data && typeof data === "object") {
+				if (data.months && typeof data.months === "object") {
+					bundle.version = Number(data.version) || 1;
+					bundle.months = data.months;
+				} else {
+					for (const [key, value] of Object.entries(data)) {
+						if (/^\d{4}-\d{2}$/.test(key) && value && typeof value === "object") {
+							bundle.months[key] = value;
+						}
+					}
+				}
+			}
+
+			if (!bundle.months || Object.keys(bundle.months).length === 0) {
+				window.alert("Fichier JSON d'export invalide ou vide.");
+				return;
+			}
+
+			const monthKey = currentMonthKey;
+			if (!monthKey) {
+				window.alert("Aucun mois en cours pour l'import.");
+				return;
+			}
+
+			let importedState = null;
+			let message = "";
+			if (bundle.months && bundle.months[monthKey]) {
+				importedState = bundle.months[monthKey];
+				message = "Données du mois chargées.";
+			} else {
+				const [yearStr, monthStr] = monthKey.split("-");
+				let year = Number(yearStr);
+				let month = Number(monthStr); // 1-12
+				let prevYear = year;
+				let prevMonth = month - 1;
+				if (prevMonth === 0) {
+					prevMonth = 12;
+					prevYear -= 1;
+				}
+				const prevKey = `${prevYear}-${String(prevMonth).padStart(2, "0")}`;
+				if (bundle.months && bundle.months[prevKey]) {
+					importedState = bundle.months[prevKey];
+					message =
+						"Données introuvables pour ce mois, chargement du mois précédent.";
+				} else {
+					window.alert(
+						"Données introuvables pour ce mois et le mois précédent dans ce fichier."
+					);
+				}
+			}
+
+			if (importedState) {
+				appState[monthKey] = importedState;
+				saveAppState();
+				renderAll();
+				window.alert(message);
+				try {
+					window.localStorage.setItem(
+						EXPORT_BUNDLE_KEY,
+						JSON.stringify(bundle)
+					);
+				} catch (err) {
+					console.error("Erreur de sauvegarde du bundle importé :", err);
+				}
+			}
+		} catch (err) {
+			console.error("Erreur de lecture du fichier d'import :", err);
+			window.alert("Fichier JSON invalide.");
+		} finally {
+			input.value = "";
+		}
+	};
+
+	reader.readAsText(file, "utf-8");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
