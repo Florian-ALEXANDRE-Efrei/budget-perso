@@ -14,36 +14,23 @@ python3 -m http.server 8000
 
 Puis ouvrir : <http://localhost:8000/>
 
-## Export / import JSON (par mois)
+## Données et configuration
 
-- **Exporter les données du mois**
-	- Choisir le mois en haut de la page.
-	- Cliquer sur `Exporter les données du mois`.
-	- Un fichier `budget-data.json` est téléchargé.
-	- Le fichier peut contenir plusieurs mois ; seul le mois courant est
-		ajouté ou mis à jour à chaque export.
+- Les données sont stockées dans `localStorage` du navigateur, par mois
+	(`YYYY-MM`).
+- Lorsqu'un mois n'a pas encore de données, les tableaux sont
+	initialisés à partir du fichier `default-tables.json` :
+	- section `charges` pour le tableau **Charges** ;
+	- section `rentDetails` pour le tableau **Détails du loyer**.
+- Les libellés des lignes sont **fixes** (non modifiables dans l'UI),
+	seuls les montants sont éditables.
 
-- **Importer les données du mois**
-	- Choisir le mois cible dans le sélecteur.
-	- Cliquer sur `Importer les données du mois` et sélectionner un
-		fichier `budget-data.json`.
-	- Si le fichier contient des données pour le mois courant, elles
-		sont chargées.
-	- Sinon, l'appli essaie de charger le **mois précédent** ; en cas de
-		succès un message indique que le mois précédent a été utilisé.
-	- Si aucune donnée n'est trouvée pour le mois courant ni pour le
-		mois précédent, un message d'erreur s'affiche et rien n'est modifié.
+## Réinitialiser les montants d'un mois
 
-L'export utilise un JSON de la forme :
-
-```json
-{
-	"version": 1,
-	"months": {
-		"2025-12": { "salary": 0, "rentBillTotal": 0, "charges": [], "rentDetails": [] }
-	}
-}
-```
-
-Chaque entrée de `months` correspond à l'état interne pour un mois
-(`appState["YYYY-MM"]`).
+- Choisir le mois dans le sélecteur.
+- Cliquer sur le bouton :
+	`Réinitialiser les montants depuis les valeurs par défaut`.
+- Confirmer la boîte de dialogue.
+- Les montants des tableaux **Charges** et **Détails du loyer** sont
+	remis aux valeurs définies dans `default-tables.json` pour ce mois,
+	sans modifier le salaire ni le `Loyer facture totale`.
