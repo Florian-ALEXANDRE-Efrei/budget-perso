@@ -5,7 +5,9 @@
     { "label": "Red By Sfr", "defaultAmount": 8 },
     { "label": "Assurance vie", "defaultAmount": 150 },
     { "label": "Velib", "defaultAmount": 7 },
-    { "label": "Navigo", "defaultAmount": 41.6 }
+    { "label": "Navigo", "defaultAmount": 41.6 },
+    { "label": "Prêt", "defaultAmount": 172.78 },
+    { "label": "Magic form", "defaultAmount": 30 }
   ],
   "rentDetails": [
     { "label": "Loyer", "defaultAmount": 710 },
