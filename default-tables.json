@@ -1,19 +1,21 @@
 {
-  "version": 1,
-  "charges": [
-    { "label": "Chat GPT", "defaultAmount": 23 },
-    { "label": "Red By Sfr", "defaultAmount": 8 },
-    { "label": "Assurance vie", "defaultAmount": 150 },
-    { "label": "Velib", "defaultAmount": 7 },
-    { "label": "Navigo", "defaultAmount": 41.6 },
-    { "label": "Prêt", "defaultAmount": 172.78 },
-    { "label": "Magic form", "defaultAmount": 30 }
+  "version": 2,
+  "essentiels": [
+    { "label": "Loyer", "defaultAmount": 750 },
+    { "label": "Courses alimentaires", "defaultAmount": 300 },
+    { "label": "Navigo", "defaultAmount": 41.60 },
+    {"label": "Velib", "defaultAmount": 7 },
+    { "label": "Téléphone", "defaultAmount": 8 },
+    { "label": "Prêt étudiant", "defaultAmount": 172.78 }
   ],
-  "rentDetails": [
-    { "label": "Loyer", "defaultAmount": 710 },
-    { "label": "Provision pour charges", "defaultAmount": 40 },
-    { "label": "Assurance habitation", "defaultAmount": 19.82 },
-    { "label": "Internet", "defaultAmount": 12.995 },
-    { "label": "Electricité", "defaultAmount": 50 }
+  "envies": [
+    { "label": "Magic form", "defaultAmount": 30 },
+    { "label": "Chat GPT", "defaultAmount": 23 },
+    { "label": "Spotify", "defaultAmount": 4.71 },
+    { "label": "Cours de dessin", "defaultAmount": 80 }
+  ],
+  "epargne": [
+    { "label": "Assurance vie", "defaultAmount": 200 },
+    { "label": "PEA", "defaultAmount": 150 }
   ]
 }

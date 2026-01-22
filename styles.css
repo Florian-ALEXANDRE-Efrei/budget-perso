@@ -103,8 +103,9 @@ button:active {
 	background-color: #f9fafb;
 }
 
-.summary-total {
+.summary-pouvoir {
 	background-color: #ecfdf3;
+	font-weight: 600;
 }
 
 .summary-label {
@@ -204,6 +205,39 @@ td button {
 
 td button:hover {
 	background-color: #ef4444;
+}
+
+.table-footer {
+	margin-top: 0.5rem;
+	padding: 0.6rem 0.8rem;
+	border-radius: 0.6rem;
+	background-color: #f3f4ff;
+	font-size: 0.85rem;
+	color: #111827;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.table-total {
+	font-weight: 600;
+}
+
+.table-percentage {
+	color: #6b7280;
+	font-size: 0.8rem;
+}
+
+.table-target {
+	margin-top: 0.3rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid #e0e7ff;
+	font-size: 0.8rem;
+}
+
+.table-difference {
+	margin-top: 0.2rem;
+	font-weight: 500;
 }
 
 .rent-summary {

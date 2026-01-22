@@ -36,10 +36,6 @@
 						Salaire net mensuel (€)
 						<input type="number" id="salaryInput" min="0" step="100" />
 					</label>
-					<label>
-						Loyer facture totale (pour 2 personnes)
-						<input type="number" id="rentInput" min="0" step="50" />
-					</label>
 				</div>
 			</section>
 
@@ -47,22 +43,22 @@
 				<h2>Résumé du mois</h2>
 				<div class="summary-grid">
 					<div class="summary-item">
-						<span class="summary-label">Salaire :</span>
+						<span class="summary-label">Salaire net :</span>
 						<span id="summarySalary" class="summary-value">0 €</span>
 					</div>
 					<div class="summary-item">
-						<span class="summary-label">Loyer total (Compte joint Revolut) :</span>
-						<span id="summaryRent" class="summary-value">0 €</span>
+						<span class="summary-label">Compte Revolut :</span>
+						<span id="summaryRevolutPerso" class="summary-value">0 €</span>
 					</div>
 					<div class="summary-item">
-						<span class="summary-label">Charges :</span>
-						<span id="summaryCharges" class="summary-value">0 €</span>
+						<span class="summary-label">Compte joint :</span>
+						<span id="summaryCompteJoint" class="summary-value">0 €</span>
 					</div>
 					<div class="summary-item">
-						<span class="summary-label">Total charges (loyer + charges) :</span>
-						<span id="summaryTotalCharges" class="summary-value">0 €</span>
+						<span class="summary-label">Épargne :</span>
+						<span id="summaryEpargne" class="summary-value">0 €</span>
 					</div>
-					<div class="summary-item summary-total">
+					<div class="summary-item summary-pouvoir">
 						<span class="summary-label">Pouvoir d'achat :</span>
 						<span id="summaryPouvoir" class="summary-value">0 €</span>
 					</div>
@@ -85,7 +81,7 @@
 
 				<div class="tables-grid">
 					<div class="table-block">
-						<h3>Charges</h3>
+						<h3>Besoins essentiels</h3>
 						<table>
 							<thead>
 								<tr>
@@ -94,12 +90,22 @@
 									<th></th>
 								</tr>
 							</thead>
-							<tbody id="chargesBody"></tbody>
+							<tbody id="essentielsBody"></tbody>
 						</table>
+						<div class="table-footer">
+							<div class="table-total">
+								Total : <span id="totalEssentiels">0 €</span>
+							</div>
+							<div class="table-percentage">
+								<span id="percentageEssentiels">0%</span> du salaire
+							</div>						<div class="table-target">
+							<div>Part attendue : <strong>60%</strong></div>
+							<div id="differenceEssentiels" class="table-difference">Différence : 0 €</div>
+						</div>						</div>
 					</div>
 
 					<div class="table-block">
-						<h3>Détails du loyer</h3>
+						<h3>Envies</h3>
 						<table>
 							<thead>
 								<tr>
@@ -108,25 +114,42 @@
 									<th></th>
 								</tr>
 							</thead>
-							<tbody id="rentDetailsBody"></tbody>
+							<tbody id="enviesBody"></tbody>
 						</table>
-						<div id="rentSummary" class="rent-summary">
-							<div>
-								Part attendue (facture / 2) :
-								<span id="expectedShareValue">0 €</span>
+						<div class="table-footer">
+							<div class="table-total">
+								Total : <span id="totalEnvies">0 €</span>
 							</div>
-							<div>
-								Loyer + Provision pour charges :
-								<span id="loyerProvisionValue">0 €</span>
+							<div class="table-percentage">
+								<span id="percentageEnvies">0%</span> du salaire
+							</div>						<div class="table-target">
+							<div>Part attendue : <strong>25%</strong></div>
+							<div id="differenceEnvies" class="table-difference">Différence : 0 €</div>
+						</div>						</div>
+					</div>
+
+					<div class="table-block">
+						<h3>Épargne</h3>
+						<table>
+							<thead>
+								<tr>
+									<th>Libellé</th>
+									<th>Montant (€)</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody id="epargneBody"></tbody>
+						</table>
+						<div class="table-footer">
+							<div class="table-total">
+								Total : <span id="totalEpargne">0 €</span>
 							</div>
-							<div
-								id="rentMismatchWarning"
-								class="rent-warning hidden"
-							>
-								Attention : la part calculée ne correspond pas à la
-								facture.
-							</div>
-						</div>
+							<div class="table-percentage">
+								<span id="percentageEpargne">0%</span> du salaire
+							</div>						<div class="table-target">
+							<div>Part attendue : <strong>15%</strong></div>
+							<div id="differenceEpargne" class="table-difference">Différence : 0 €</div>
+						</div>						</div>
 					</div>
 				</div>
 				<div class="reset-row">
