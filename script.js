@@ -317,7 +317,7 @@ function computeTotals(state) {
 		0
 	);
 	
-	const totalDepenses = totalEssentiels + totalEnvies;
+	const totalDepenses = totalEssentiels + totalEnvies + totalEpargne;
 	const pouvoirAchat = salary - totalDepenses;
 	
 	return {
@@ -461,17 +461,17 @@ function drawSankey(state) {
 		}
 	});
 
-	(state.envies || []).forEach((item) => {
-		const amount = sanitizeAmount(item.amount);
-		if (amount > 0 && item.label) {
-			links.push([NODE_ENVIES, item.label, amount]);
-		}
-	});
-
 	(state.epargne || []).forEach((item) => {
 		const amount = sanitizeAmount(item.amount);
 		if (amount > 0 && item.label) {
 			links.push([NODE_EPARGNE, item.label, amount]);
+		}
+	});
+
+	(state.envies || []).forEach((item) => {
+		const amount = sanitizeAmount(item.amount);
+		if (amount > 0 && item.label) {
+			links.push([NODE_ENVIES, item.label, amount]);
 		}
 	});
 
