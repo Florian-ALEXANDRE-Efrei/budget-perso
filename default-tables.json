@@ -1,7 +1,7 @@
 {
   "version": 2,
   "essentiels": [
-    { "label": "Loyer", "defaultAmount": 750 },
+    { "label": "Loyer", "defaultAmount": 815 },
     { "label": "Courses alimentaires", "defaultAmount": 300 },
     { "label": "Navigo", "defaultAmount": 41.60 },
     {"label": "Velib", "defaultAmount": 7 },

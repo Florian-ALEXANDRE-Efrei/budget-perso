@@ -428,34 +428,52 @@ function drawSankey(state) {
 
 	const totals = computeTotals(state);
 	const salary = sanitizeAmount(totals.salary);
+	const totalEssentiels = sanitizeAmount(totals.totalEssentiels);
+	const totalEnvies = sanitizeAmount(totals.totalEnvies);
+	const totalEpargne = sanitizeAmount(totals.totalEpargne);
+	const pouvoirAchat = sanitizeAmount(totals.pouvoirAchat);
 
 	const NODE_SALAIRE = "Salaire";
+	const NODE_ESSENTIELS = "Besoins essentiels";
+	const NODE_ENVIES = "Envies";
+	const NODE_EPARGNE = "Épargne";
+	const NODE_POUVOIR = "Pouvoir d'achat";
 
 	const links = [];
 
 	if (salary > 0) {
-		// Directly link all individual items from salary
-		(state.essentiels || []).forEach((item) => {
-			const amount = sanitizeAmount(item.amount);
-			if (amount > 0 && item.label) {
-				links.push([NODE_SALAIRE, item.label, amount]);
-			}
-		});
-
-		(state.envies || []).forEach((item) => {
-			const amount = sanitizeAmount(item.amount);
-			if (amount > 0 && item.label) {
-				links.push([NODE_SALAIRE, item.label, amount]);
-			}
-		});
-
-		(state.epargne || []).forEach((item) => {
-			const amount = sanitizeAmount(item.amount);
-			if (amount > 0 && item.label) {
-				links.push([NODE_SALAIRE, item.label, amount]);
-			}
-		});
+		// Level 1: Salaire to categories
+		if (totalEssentiels > 0)
+			links.push([NODE_SALAIRE, NODE_ESSENTIELS, totalEssentiels]);
+		if (totalEnvies > 0)
+			links.push([NODE_SALAIRE, NODE_ENVIES, totalEnvies]);
+		if (totalEpargne > 0)
+			links.push([NODE_SALAIRE, NODE_EPARGNE, totalEpargne]);
+		if (pouvoirAchat > 0)
+			links.push([NODE_SALAIRE, NODE_POUVOIR, pouvoirAchat]);
 	}
+
+	// Level 2: Categories to individual items
+	(state.essentiels || []).forEach((item) => {
+		const amount = sanitizeAmount(item.amount);
+		if (amount > 0 && item.label) {
+			links.push([NODE_ESSENTIELS, item.label, amount]);
+		}
+	});
+
+	(state.envies || []).forEach((item) => {
+		const amount = sanitizeAmount(item.amount);
+		if (amount > 0 && item.label) {
+			links.push([NODE_ENVIES, item.label, amount]);
+		}
+	});
+
+	(state.epargne || []).forEach((item) => {
+		const amount = sanitizeAmount(item.amount);
+		if (amount > 0 && item.label) {
+			links.push([NODE_EPARGNE, item.label, amount]);
+		}
+	});
 
 	// Safety: never allow a self-link that would create a cycle
 	const safeLinks = links.filter(
