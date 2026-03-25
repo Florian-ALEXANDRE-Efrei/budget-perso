@@ -10,7 +10,7 @@
   ],
   "envies": [
     { "label": "Magic form", "defaultAmount": 30 },
-    { "label": "Chat GPT", "defaultAmount": 23 },
+    { "label": "Claude IA", "defaultAmount": 21 },
     { "label": "Spotify", "defaultAmount": 4.71 },
     { "label": "Cours de dessin", "defaultAmount": 80 }
   ],
